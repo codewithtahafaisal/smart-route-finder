@@ -1,0 +1,8 @@
+{
+  "center": [24.8607, 67.0011],
+  "distance_m": 1000,
+  "request_timeout_seconds": 90,
+  "overpass_url": "https://overpass-api.de/api",
+  "route_buffer_m": 1500,
+  "route_max_area_km2": 2500
+}

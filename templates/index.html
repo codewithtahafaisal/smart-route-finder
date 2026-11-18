@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plan a journey with multiple stops in the Smart Route Finder route planning workspace.">
+    <title>Smart Route Finder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous" defer></script>
+    <script src="{{ url_for('static', filename='js/locations.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/route-data.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/search.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/routing.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/comparison.js') }}" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to route planner</a>
+    <header class="site-header">
+      <div class="header-content">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/>
+              <path d="M8.5 6H16a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8h2M6 8.5V12"/>
+            </svg>
+          </div>
+          <div>
+            <h1>Smart Route Finder</h1>
+            <p>AI-Based Multi-Stop Route Planning System</p>
+          </div>
+        </div>
+        <span class="workspace-label">Planning workspace</span>
+      </div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <div class="nav-content">
+          <a class="nav-link active" href="#route-planner" aria-current="page">Route planner</a>
+          <a class="nav-link" href="#map-preview">Map preview</a>
+          <a class="nav-link" href="#route-results">Route results</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main-content" class="page-content">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Your route, organized</p>
+          <h2>Plan your next journey</h2>
+          <p class="page-description">Choose your locations and stops. Keep every part of your journey in one place.</p>
+        </div>
+        <span class="preview-badge"><span class="status-dot" aria-hidden="true"></span>Road route planner</span>
+      </div>
+
+      <div class="dashboard">
+        <section id="route-planner" class="panel planner-panel" aria-labelledby="planner-heading">
+          <div class="panel-heading">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/>
+              </svg>
+            </span>
+            <div>
+              <h2 id="planner-heading">Route planning</h2>
+              <p>Tell us where you want to go.</p>
+            </div>
+          </div>
+          <noscript><p class="notice">Enable JavaScript to add stops, reset the form, and try the route planning controls.</p></noscript>
+
+          <form id="route-form" autocomplete="off" data-autocomplete="{{ 'true' if search_autocomplete else 'false' }}" data-search-provider="{{ search_provider }}">
+            <!-- Enable controls once the JavaScript handlers are ready. -->
+            <fieldset id="route-fields" class="route-fields" disabled>
+              <legend class="visually-hidden">Route details</legend>
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="starting-location"><span class="location-marker" aria-hidden="true"></span>Starting Location <span class="required-mark" aria-hidden="true">*</span></label>
+                  <button class="map-pick-button" data-location-input="starting-location" aria-label="Pick starting location on map" type="button" disabled>Pick on map</button>
+                </div>
+                <input id="starting-location" name="start" type="text" placeholder="Enter starting location" maxlength="160" required>
+                <p class="location-coordinates" id="starting-location-coordinates" hidden></p>
+              </div>
+
+              <div class="stops-section">
+                <div class="field-heading">
+                  <h3 id="stops-heading">Intermediate stops</h3>
+                  <span class="optional-label">Optional</span>
+                </div>
+                <div id="stop-list" class="stop-list" role="group" aria-labelledby="stops-heading"></div>
+                <button id="add-stop" class="button add-stop-button" type="button">
+                  <svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
+                  Add Stop
+                </button>
+              </div>
+
+              <div class="form-field destination-field">
+                <div class="field-label-row">
+                  <label for="final-destination"><span class="location-marker destination-marker" aria-hidden="true"></span>Final Destination <span class="required-mark" aria-hidden="true">*</span></label>
+                  <button class="map-pick-button" data-location-input="final-destination" aria-label="Pick final destination on map" type="button" disabled>Pick on map</button>
+                </div>
+                <input id="final-destination" name="destination" type="text" placeholder="Enter final destination" maxlength="160" required>
+                <p class="location-coordinates" id="final-destination-coordinates" hidden></p>
+              </div>
+              <p class="field-help address-help">Type at least 3 characters and choose a suggestion. Press Search for a full place-name search, or pick a point on the map.</p>
+              <p class="field-help search-policy-note">Place search: {{ search_provider }} + Nominatim · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a></p>
+              {% if not search_autocomplete %}
+              <p class="field-help search-policy-note">Public Nominatim searches run only when you press Search or Enter. <a href="https://operations.osmfoundation.org/policies/nominatim/">Usage policy</a></p>
+              {% endif %}
+
+              <div class="algorithm-section form-field">
+                <label for="algorithm">Search algorithm</label>
+                <select id="algorithm" name="algorithm" aria-describedby="algorithm-help">
+                  <option value="BFS" selected>BFS — Breadth-First Search</option>
+                  <option value="DFS">DFS — Depth-First Search</option>
+                  <option value="UCS">UCS — Uniform Cost Search</option>
+                  <option value="A*">A* — A-Star Search</option>
+                </select>
+                <p id="algorithm-help" class="field-help">BFS: fewest road edges. DFS: a discovered path. UCS and A*: shortest road distance.</p>
+              </div>
+
+              <div class="form-actions">
+                <button class="button primary-button" type="submit">
+                  <span id="calculate-route-label">Calculate Complete Route</span>
+                  <svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5"/></svg>
+                </button>
+                <button class="button secondary-button" type="reset">Reset</button>
+                <button id="compare-algorithms" class="button secondary-button compare-button" type="button">Compare Algorithms</button>
+              </div>
+              <p class="form-footnote">Start → Stops → Destination. Every segment uses your selected algorithm. Stops stay in your chosen order.</p>
+            </fieldset>
+            <p id="form-message" class="notice" role="status" aria-live="polite" hidden></p>
+            <p id="stop-announcement" class="visually-hidden" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <div class="overview-column">
+          <section id="map-preview" class="panel map-panel" aria-labelledby="map-heading">
+            <div class="panel-heading overview-heading">
+              <div>
+                <h2 id="map-heading">Map overview</h2>
+                <p>Explore Karachi and choose your locations.</p>
+              </div>
+              <span id="map-status" class="neutral-badge">Loading map</span>
+            </div>
+            <div class="map-toolbar">
+              <div class="form-field">
+                <label for="map-target">Select location for</label>
+                <select id="map-target" aria-describedby="map-instructions" disabled>
+                  <option value="starting-location">Starting Location</option>
+                </select>
+              </div>
+              <p id="map-instructions" class="field-help" role="status" aria-live="polite">Click or tap the map to set Starting Location. Focus another location field to change the selection.</p>
+            </div>
+            <div class="map-actions" role="group" aria-label="Map view controls">
+              <button id="recenter-route" class="button secondary-button" type="button" title="Show all selected journey markers and the calculated route" disabled>
+                <svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/><path d="m7 10 2 2 4-4"/></svg>
+                Show Full Route
+              </button>
+              <button id="my-location" class="button secondary-button" type="button" title="Ask your browser for your current location once; journey selections stay unchanged" disabled>
+                <svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="5"/><circle cx="10" cy="10" r="1.5"/><path d="M10 1v3m0 12v3M1 10h3m12 0h3"/></svg>
+                <span id="my-location-label">My Location</span>
+              </button>
+              <button id="go-start" class="button secondary-button" type="button" title="Center on the currently selected starting location" disabled><svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="4" cy="10" r="2"/><path d="M8 10h9m-4-4 4 4-4 4"/></svg>Go to Starting Point</button>
+              <button id="go-destination" class="button secondary-button" type="button" title="Center on the currently selected destination" disabled><svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M5 18V2m0 2h11l-2 3 2 3H5"/></svg>Go to Destination</button>
+            </div>
+            <p id="map-view-message" class="field-help map-view-message" role="status" aria-live="polite" hidden></p>
+            <p id="displayed-route-note" class="notice displayed-route-note" role="status" aria-live="polite" hidden></p>
+            <p id="map-error" class="notice map-error" role="alert" hidden></p>
+            <noscript><p class="notice map-error">Enable JavaScript to load the interactive map.</p></noscript>
+            <div class="map-canvas">
+              <div id="route-map" class="route-map" role="region" aria-label="Interactive OpenStreetMap map" aria-describedby="map-instructions map-keyboard-help"></div>
+              <button id="relocate-route" class="button relocate-control" type="button" title="Fit the latest successful route, including every stop" disabled><svg class="button-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/><circle cx="10" cy="10" r="2"/></svg>Relocate to Route</button>
+            </div>
+            <div class="map-footer">
+              <div class="map-selection" role="status" aria-live="polite" aria-atomic="true">
+                <strong id="selected-location-label">Starting Location</strong>
+                <p id="selected-coordinates">No map location selected for this field.</p>
+              </div>
+              <button id="clear-map-marker" class="button secondary-button" type="button" disabled>Clear marker</button>
+            </div>
+            <p id="map-keyboard-help" class="field-help map-keyboard-help">Keyboard: focus the map, use arrow keys to pan, and press Enter to select the center. Use + / − to zoom.</p>
+            <p id="road-network-status" class="field-help road-network-status" title="{{ road_network_status.detail }}">
+              <span class="status-dot network-dot-{{ road_network_status.state }}" aria-hidden="true"></span>
+              Road network: <strong id="road-network-state">{{ road_network_status.label }}</strong>
+              <span id="road-network-detail">{% if road_network_status.state == 'loaded' %}· {{ road_network_status.detail }}{% endif %}</span>
+            </p>
+          </section>
+
+          <section id="route-results" class="panel results-panel" aria-labelledby="results-heading">
+            <div class="panel-heading overview-heading">
+              <div>
+                <h2 id="results-heading">Route results</h2>
+                <p>Your journey at a glance.</p>
+              </div>
+              <span id="route-result-status" class="neutral-badge">Awaiting calculation</span>
+            </div>
+            <dl class="results-grid">
+              <div class="result-item">
+                <dt>Selected Algorithm</dt>
+                <dd id="result-algorithm">—</dd>
+              </div>
+              <div class="result-item">
+                <dt>Total Route Distance</dt>
+                <dd id="result-distance">—</dd>
+              </div>
+              <div class="result-item">
+                <dt>Estimated Travel Time</dt>
+                <dd id="result-travel-time" class="metric-unavailable">Not estimated</dd>
+              </div>
+              <div class="result-item">
+                <dt title="Sum of node expansions across all segments. A node can be explored again in another segment.">Explored Nodes</dt>
+                <dd id="result-explored">—</dd>
+              </div>
+              <div class="result-item">
+                <dt>Execution Time</dt>
+                <dd id="result-execution">—</dd>
+              </div>
+              <div class="result-item"><dt>Intermediate Stops</dt><dd id="result-stops">—</dd></div>
+              <div class="result-item"><dt>Route Segments</dt><dd id="result-segments">—</dd></div>
+            </dl>
+            <p id="route-result-note" class="results-note" role="status" aria-live="polite">Select a start, optional stops, and destination. Choose an algorithm to calculate the complete journey in your entered order.</p>
+            <div id="journey-details" class="journey-details" hidden>
+              <h3>Journey order</h3>
+              <ol id="journey-locations" class="journey-list"></ol>
+              <h3>Segment results</h3>
+              <ol id="segment-results" class="journey-list segment-results"></ol>
+              <p class="field-help">Explored nodes and search times are totals across segments. A node may be explored again in another segment.</p>
+            </div>
+            <div id="route-attempt" class="route-attempt" hidden>
+              <h3>Latest unsuccessful attempt</h3>
+              <p id="route-attempt-message" role="status"></p>
+              <ol id="attempt-segments" class="journey-list segment-results"></ol>
+            </div>
+          </section>
+
+          <section id="algorithm-comparison" class="panel comparison-panel" aria-labelledby="comparison-heading">
+            <div class="panel-heading overview-heading">
+              <div><h2 id="comparison-heading">Algorithm comparison</h2><p>One journey, the same graph, four custom searches.</p></div>
+              <span id="comparison-status" class="neutral-badge">Not run</span>
+            </div>
+            <div class="comparison-content">
+              <p id="comparison-message" class="field-help" role="status">Choose locations, then press Compare Algorithms. Comparison does not change the displayed route.</p>
+              <div id="comparison-results" hidden>
+                <p id="comparison-journey" class="comparison-journey"></p>
+                <div class="table-scroll" tabindex="0" role="region" aria-label="Algorithm comparison table">
+                  <table class="comparison-table">
+                    <caption class="visually-hidden">Measured results for the comparison journey</caption>
+                    <thead><tr><th scope="col">Algorithm</th><th scope="col">Distance (km)</th><th scope="col">Explored nodes</th><th scope="col">Execution (ms)</th><th scope="col">Route status</th><th scope="col">Display</th></tr></thead>
+                    <tbody id="comparison-rows"></tbody>
+                  </table>
+                </div>
+                <div id="comparison-charts" class="comparison-charts"></div>
+                <p class="field-help comparison-explanation">Charts include complete successful routes only. Bars start at zero; each chart has its own scale. Times describe this measured run, including search setup—not a universal speed ranking.</p>
+              </div>
+              <p class="field-help comparison-explanation">BFS minimizes edge count. DFS finds a path without a shortest-route guarantee. UCS minimizes nonnegative road-length cost. A* uses the same cost and a checked geographic lower bound.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <footer class="page-footer">
+        <span>Smart Route Finder</span>
+        <span>A thoughtful start to a better journey.</span>
+      </footer>
+    </main>
+
+    <!-- JavaScript clones this template for each optional intermediate stop. -->
+    <template id="stop-template">
+      <div class="stop-row">
+        <div class="form-field stop-field">
+          <div class="field-label-row">
+            <label class="stop-label"></label>
+            <button class="map-pick-button" type="button" disabled>Pick on map</button>
+          </div>
+          <input class="stop-input" name="stops" type="text" placeholder="Enter intermediate location" maxlength="160">
+          <p class="location-coordinates" hidden></p>
+          <div class="stop-order-actions" role="group" aria-label="Change stop order">
+            <button class="stop-order-button move-stop-up" type="button">↑ Move up</button>
+            <button class="stop-order-button move-stop-down" type="button">↓ Move down</button>
+          </div>
+        </div>
+        <button class="icon-button remove-stop" type="button">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 8 8m0-8-8 8"/></svg>
+        </button>
+      </div>
+    </template>
+  </body>
+</html>

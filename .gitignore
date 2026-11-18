@@ -1,0 +1,56 @@
+# Local Python environments, caches, and build artifacts.
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+coverage.xml
+build/
+dist/
+*.egg-info/
+
+# All road graphs, cached provider responses, and local place-search history
+# are generated on demand. Publish only their directory's documentation.
+data/*
+!data/README.md
+
+# Secrets and machine-specific credentials. Only sanitized examples belong in Git.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+credentials*.json
+service-account*.json
+.aws/
+.ssh/
+.codex/
+.agents/
+
+# Temporary files and logs.
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+*~
+.step*-check.py
+.step*-browser-check.py
+.publish-*
+
+# Local editor and operating system files.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
